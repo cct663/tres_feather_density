@@ -1,0 +1,37 @@
+---
+title: |
+  | Supplementary Materials for:
+  | ...fill in title
+author: 
+  - Conor Taff
+  - Brianna Johnson
+  - Allison Anker
+  - Alyssa Rodriguez
+  - Other Students..
+  - Jenny Uehling
+  - Jenn Houtz
+  - David Chang van Oordt
+  - Thomas Ryan
+  - Maren Vitousek
+date: "Last Updated: `r format(Sys.time(), '%B %d %& at %H:%M')`"
+output: pdf_document
+toc: true
+---
+
+```{r setup, include = FALSE, echo = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## **Supplemental Methods**
+
+### *Repeatability of Feather Measurements*
+
+## **Supplemental Results**
+
+### *Repeatability of Feather Measurements*
+
+## **Supplemental Tables**
+
+## **Supplemental Figures**
+
+

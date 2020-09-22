@@ -1,0 +1,24 @@
+---
+title: "TRES Nestling Feather Quality"
+author: "Conor Taff"
+date: "Last Updated: `r format(Sys.time(), '%B %d %Y at %H:%M')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: cerulean
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Intro 
+
+
+## Load and prepare data
+
+## Analyses
+
+
