@@ -3,16 +3,13 @@ title: |
   | Supplementary Materials for:
   | ...fill in title
 author: 
-  - Conor Taff
+  - Conor C Taff
   - Brianna Johnson
   - Allison Anker
   - Alyssa Rodriguez
-  - Other Students..
-  - Jenny Uehling
   - Jenn Houtz
-  - David Chang van Oordt
-  - Thomas Ryan
-  - Maren Vitousek
+  - Jenny Uehling
+  - Maren N Vitousek
 date: "Last Updated: `r format(Sys.time(), '%B %d %& at %H:%M')`"
 output: pdf_document
 toc: true
