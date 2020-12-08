@@ -66,6 +66,10 @@ Thinking of Anurag's paper and the role of developmental plasticity, the Callan 
 
 **Figure 4.** Comparison of breast vs. rump feather barbule density.
 
+![](breast_vs_rump_v2.png)\
+
+**Figure 4B.** Alternative version.
+
 ## Pairwise nestling similarity
 
 ![](breast_pairwise.png)\
@@ -94,5 +98,7 @@ Thinking of Anurag's paper and the role of developmental plasticity, the Callan 
 
 **Figure 9.** Nestling feather density measurements vs. social parents and mid-parent values for breast and rump.
 
+## Nestling morphology
 
+![](nestling_morph.png)\
 

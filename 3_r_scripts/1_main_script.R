@@ -5,7 +5,7 @@
 
 
 # Load packages ----
-  pacman::p_load(tidyverse, here, lme4, scales, rptR, dabestr, ggpubr, grid, gridExtra)
+  pacman::p_load(tidyverse, here, lme4, scales, rptR, dabestr, ggpubr, grid, gridExtra, sjPlot, lmertest, ggExtra)
 
 # Load data ----
   di <- read.delim(here::here("1_raw_data/data_by_individual.txt"))
@@ -101,8 +101,53 @@
                                 c(1, 1, 1, 1, 2, 2, 3, 3),
                                 c(1, 1, 1, 1, 4, 4, 5, 5),
                                 c(1, 1, 1, 1, 4, 4, 5, 5))),
-           device = "png", width = 11.2, height = 5.9)
+           device = "png", width = 11, height = 5.5)
     
+# Calculate observer and mult-feather repeatability ----
+  # Repeatability for multiple feathers from the same bird
+    d_rep <- pivot_longer(di, c("br1_den", "br2_den", "back1_den", "back2_den"), names_to = "type", values_to = "value")
+    grp <- data.frame(type = c("br1_den", "br2_den", "back1_den", "back2_den"), grp = c("breast", "breast", "back", "back"))
+    d_rep <- plyr::join(d_rep, grp, "type", "left", "first")
+    brst_rpt <- subset(d_rep, d_rep$grp == "breast")
+    back_rpt <- subset(d_rep, d_rep$grp == "back")
+    
+    #Overall breast and back repeatability
+      # r_br_all <- rpt(value ~ (1|band), grname = "band", data = brst_rpt, datatype = "Gaussian", nboot = 1000, npermut = 0)
+      # r_ba_all <- rpt(value ~ (1|band), grname = "band", data = back_rpt, datatype = "Gaussian", nboot = 1000, npermut = 0)
+      # 
+      # saveRDS(r_br_all, here("5_saved_objects/r_br_all.rds"))
+      # saveRDS(r_ba_all, here("5_saved_objects/r_ba_all.rds"))
+      
+      # r_br_ad <- rpt(value ~ (1|band), grname = "band", data = subset(brst_rpt, brst_rpt$age == "adult", 
+      #                 datatype = "Gaussian", nboot = 1000, npermut = 0))
+      # r_ba_ad <- rpt(value ~ (1|band), grname = "band", data = subset(back_rpt, back_rpt$age == "adult", 
+      #                 datatype = "Gaussian", nboot = 1000, npermut = 0)) 
+      
+      # saveRDS(r_br_ad, here("5_saved_objects/r_br_ad.rds"))
+      # saveRDS(r_ba_ad, here("5_saved_objects/r_ba_ad.rds"))
+      # 
+      # r_br_ne <- rpt(value ~ (1|band), grname = "band", data = subset(brst_rpt, brst_rpt$age == "nestling", 
+      #                 datatype = "Gaussian", nboot = 1000, npermut = 0))
+      # r_ba_ne <- rpt(value ~ (1|band), grname = "band", data = subset(back_rpt, back_rpt$age == "nestling", 
+      #                 datatype = "Gaussian", nboot = 1000, npermut = 0))
+      
+      # saveRDS(r_br_ne, here("5_saved_objects/r_br_ne.rds"))
+      # saveRDS(r_ba_ne, here("5_saved_objects/r_ba_ne.rds"))
+      
+  # Repeatability for multiple observers
+      # do_rpt <- rpt(density ~ (1|feather_id), grname = "feather_id", data = do, datatype = "Gaussian", nboot = 1000, npermut =)
+      # 
+      # saveRDS(do_rpt, here("5_saved_objects/do_rpt.rds"))
+      
+  # Read these results back in. Unhash them above to run again. They take a little while.
+      r_br_all <- readRDS(here("5_saved_objects/r_br_all.rds"))
+      r_ba_all <- readRDS(here("5_saved_objects/r_ba_all.rds"))
+      r_br_ad <- readRDS(here("5_saved_objects/r_br_ad.rds"))
+      r_ba_ad <- readRDS(here("5_saved_objects/r_ba_ad.rds"))
+      r_br_ne <- readRDS(here("5_saved_objects/r_br_ne.rds"))
+      r_ba_ne <- readRDS(here("5_saved_objects/r_ba_ne.rds"))
+      do_rpt <- readRDS(here("5_saved_objects/do_rpt.rds"))
+
 # Plot multiple feather comparison ----
     
     p1 <- subset(di, di$age == "nestling" | di$age == "adult") %>%
@@ -110,9 +155,9 @@
       theme_classic() + 
       scale_fill_manual(values = c(adult = a_color, nestling = n_color)) + 
       geom_smooth(method = "lm", color = "black") + 
-      guides(color = FALSE) + xlab("Breast barbules per cm feather A") +
+      guides(color = FALSE) + xlab("Breast barbs per cm feather A") +
       theme(legend.position = c(0.86, 0.14)) +
-      ylab("Breast barbules per cm feather B") + xlim(c(10, 47)) + ylim(c(10, 47)) +
+      ylab("Breast barbs per cm feather B") + xlim(c(10, 47)) + ylim(c(10, 47)) +
       annotate("text", x = -Inf, y = Inf, label = "A", hjust = -0.5, vjust = 1.5)
     
     p2 <- subset(di, di$age == "nestling" | di$age == "adult") %>%
@@ -120,9 +165,9 @@
       theme_classic() + 
       scale_fill_manual(values = c(adult = a_color, nestling = n_color)) + 
       geom_smooth(method = "lm", color = "black") + 
-      guides(color = FALSE) + xlab("Back barbules per cm feather A") +
+      guides(color = FALSE) + xlab("Back barbs per cm feather A") +
       theme(legend.position = c(0.86, 0.14)) +
-      ylab("Back barbules per cm feather B") + xlim(c(9, 43)) + ylim(c(9, 43)) +
+      ylab("Back barbs per cm feather B") + xlim(c(9, 43)) + ylim(c(9, 43)) +
       annotate("text", x = -Inf, y = Inf, label = "B", hjust = -0.5, vjust = 1.5)
     
     ggsave(here::here("3_r_scripts/two_feather_comparison.png"), 
@@ -161,7 +206,7 @@
       scale_fill_manual(values = c(adult = a_color, nestling = n_color)) + 
       scale_color_manual(values = c(adult = a_color, nestling = n_color)) +
       geom_rug(mapping = aes(col = age)) +
-      xlab("Breast Barbules Per cm") + ylab("Density") +
+      xlab("Breast Barbs Per cm") + ylab("Density") +
       geom_line(data = data.frame(x = c(mu_nb - sd_nb, mu_nb + sd_nb), y = rep(0.18, 2), age = c("nestling", "nestling")), 
                 mapping = aes(x = x, y = y), size = 1) +
       geom_line(data = data.frame(x = c(mu_ab - sd_ab, mu_ab + sd_ab), y = rep(0.17, 2), age = c("adult", "adult")), 
@@ -181,7 +226,7 @@
       scale_fill_manual(values = c(adult = a_color, nestling = n_color)) + 
       scale_color_manual(values = c(adult = a_color, nestling = n_color)) +
       geom_rug(mapping = aes(col = age)) +
-      xlab("Rump Barbules Per cm") + ylab("Density") +
+      xlab("Rump Barbs Per cm") + ylab("Density") +
       geom_line(data = data.frame(x = c(mu_nb - sd_nb, mu_nb + sd_nb), y = rep(0.18, 2), age = c("nestling", "nestling")), 
                 mapping = aes(x = x, y = y), size = 1) +
       geom_line(data = data.frame(x = c(mu_ab - sd_ab, mu_ab + sd_ab), y = rep(0.17, 2), age = c("adult", "adult")), 
@@ -199,32 +244,61 @@
     p1 <- subset(di, di$age == "nestling" | di$age == "adult") %>%
     ggplot(mapping = aes(x = breast_den, y = back_den, fill = age)) + geom_point(pch = 21, alpha = 0.7) +
       theme_classic() + scale_fill_manual(values = c(adult = a_color, nestling = n_color)) + 
-      geom_smooth(method = "lm", color = "black") + xlab("Breast barbules per cm") +
-      ylab("Back barbules per cm") +
+      geom_smooth(method = "lm", color = "black") + xlab("Breast barbs per cm") +
+      ylab("Back barbs per cm") +
       theme(legend.position = c(0.85, 0.1))
     
     ggsave(here::here("3_r_scripts/breast_vs_rump.png"), p1, device = "png", width = 5, height = 5)
     
+    
+    p1 <- subset(di, di$age == "nestling" | di$age == "adult") %>%
+      ggplot(mapping = aes(x = breast_den, y = back_den, colour = age, by = age)) + 
+      geom_point(alpha = 0.7) +
+      theme_classic() + scale_color_manual(values = c(adult = a_color, nestling = n_color)) + 
+      geom_smooth(method = "lm", aes(fill = age), color = "black") + xlab("Breast barbs per cm") +
+      ylab("Back barbs per cm") +
+      theme(legend.position = c(0.85, 0.13)) +
+      scale_fill_manual(values = c(adult = a_color, nestling = n_color))
+    ggMarginal(p1, type = "boxplot", groupFill = TRUE, bw = .7)
+    
+    ggsave(here::here("3_r_scripts/breast_vs_rump_v2.png"), 
+           ggMarginal(p1, type = "boxplot", groupFill = TRUE, bw = .7), device = "png", width = 5, height = 5)
+
+# Back vs. breast stats ----
+    
+    cor.test(di$back_den, di$breast_den, use = "complete.obs")
+    di_a <- subset(di, di$age == "adult")
+    cor.test(di_a$back_den, di_a$breast_den, use = "complete.obs")
+    di_n <- subset(di, di$age == "nestling")
+    cor.test(di_n$back_den, di_n$breast_den, use = "complete.obs")
+    
+    m <- lmer(scale(back_den) ~ scale(breast_den)*age + (1|soc_uby), data = di)
+    
+    mn <- lmer(back_den ~ breast_den + (1|soc_uby) + (1|gen_mom), data = di_n)
+    
+    m_back <- lmer(back_den ~ age + (1|soc_uby), data = di)
+    m_breast <- lmer(breast_den ~ age + (1|soc_uby), data = di)
+        
 # Fledging age by feathers ----
     
     p1 <- di %>%
-      filter(age == "nestling", fled_age > 17) %>%
-      ggplot(mapping = aes(x = fled_age, y = breast_den, color = trt_group)) + 
-      geom_point(pch = 21, size = 2, aes(fill = trt_group)) +
+      filter(age == "nestling", fled_age > 17) %>%  # the few at 17 days seem to be rfid record problems
+      ggplot(mapping = aes(x = fled_age, y = breast_den, color = trt_group, fill = trt_group)) + 
+      geom_point(pch = 21, size = 2, color = "gray30") +
       theme_classic() + xlab("Fledge Age (days)") +
-      ylab("Breast Barbules Per cm") +
+      ylab("Breast Barbs Per cm") +
       geom_smooth(method = "lm", mapping = aes(fill = trt_group), color = "gray30") +
-      guides(fill = guide_legend(title = "Treatment"), color = guide_legend(title = "Treatment")) +
+      guides(fill = FALSE, color = FALSE) +
       theme(legend.position = c(0.86, 0.14)) +
       annotate("text", x = -Inf, y = Inf, label = "A", hjust = -0.5, vjust = 1.5)
-      #ggMarginal(p1, type = "density", groupFill = TRUE, bw = .7)
+      #ggMarginal(p1, type = "violin", groupFill = TRUE, bw = .7)
       
     p2 <- di %>%
-      filter(age == "nestling", fled_age > 17) %>%
-      ggplot(mapping = aes(x = fled_age, y = back_den, color = trt_group)) + 
-      geom_point(pch = 21, size = 2, aes(fill = trt_group)) +
+      filter(age == "nestling", fled_age > 17) %>%  # the few at 17 days seem to be rfid record problems
+      ggplot(mapping = aes(x = fled_age, y = back_den, color = trt_group, fill = trt_group)) + 
+      geom_point(pch = 21, size = 2, color = "gray30") +
       theme_classic() + xlab("Fledge Age (days)") +
-      ylab("Rump Barbules Per cm") +
+      ylab("Rump Barbs Per cm") +
       geom_smooth(method = "lm", mapping = aes(fill = trt_group), color = "gray30") +
       guides(fill = guide_legend(title = "Treatment"), color = guide_legend(title = "Treatment")) +
       theme(legend.position = c(0.86, 0.14)) +
@@ -232,8 +306,20 @@
       #ggMarginal(p2, type = "density", groupFill = TRUE, bw = .7)
     
     ggsave(here::here("3_r_scripts/fled_vs_feather.png"),   
-      ggarrange(ggMarginal(p1, type = "density", groupFill = TRUE, bw = .7), ggMarginal(p2, type = "density", groupFill = TRUE, bw = .7)),
+      ggarrange(p1, p2),
       device = "png", width = 11, height = 5.6)
+    
+  # Model
+    di_n <- subset(di, di$age == "nestling")
+    di_n$Nest <- di_n$soc_uby
+    di_n$Mother <- di_n$gen_mom
+    m_full <- lmer(fled_age ~ back_den + breast_den + trt_group + back_den*trt_group + breast_den*trt_group + (1|Nest) + (1|Mother), data = di_n)
+    m_red <- lmer(fled_age ~ back_den + breast_den + trt_group + (1|Nest) + (1|Mother), data = di_n)
+    
+    tab_model(m_full, m_red,
+              dv.labels = c("Fledge Age (Days)", "Fledge Age (Days)"),
+              pred.labels = c("Intercept", "Back Barb Density", "Breast Barb Density", "Handicap", "Predator", 
+                              "Back Barb * Handicap", "Back Barb * Predator", "Breast Barb * Handicap", "Breast Barb * Predator"))
 
 # Nestling pairwise similarity ----
     n_sim <- subset(di, di$age == "nestling" & di$parents_knwn == "yes")
@@ -278,18 +364,18 @@
     
     p1 <- ggplot(data = pair_df) + 
       geom_density(aes(x = br_diff, fill = group), alpha = 0.4) + 
-      theme_classic() + xlab("Breast Barbule Abs. Difference cm") +
+      theme_classic() + xlab("Breast Barb Abs. Difference cm") +
       ylab("Density") + theme(legend.position = c(0.85, 0.5)) +
       annotate("text", x = -Inf, y = Inf, label = "C", hjust = -0.5, vjust = 1.5)
     p2 <- ggplot(data = pair_df, mapping = aes(x = relation, y = br_diff)) + theme_classic() +
       geom_jitter(alpha = 0.04, width = 0.1) + 
       geom_boxplot(fill = "coral3", alpha = 0.3, outlier.shape = NA) +
-      xlab("Relationship") + ylab("Breast Barbule Abs. Difference cm") +
+      xlab("Relationship") + ylab("Breast Barb Abs. Difference cm") +
       annotate("text", x = -Inf, y = Inf, label = "A", hjust = -0.5, vjust = 1.5)
     p3 <- ggplot(data = pair_df, mapping = aes(x = same_box, y = br_diff)) + theme_classic() +
       geom_jitter(alpha = 0.04, width = 0.1) +
       geom_boxplot(fill = "coral3", alpha = 0.3, outlier.shape = NA) +
-      xlab("Nest Raised") + ylab("Breast Barbule Abs. Difference cm") +
+      xlab("Nest Raised") + ylab("Breast Barb Abs. Difference cm") +
       annotate("text", x = -Inf, y = Inf, label = "B", hjust = -0.5, vjust = 1.5)
     
     ggsave(here::here("3_r_scripts/breast_pairwise.png"),
@@ -299,18 +385,18 @@
     
     p1 <- ggplot(data = pair_df) + 
       geom_density(aes(x = ba_diff, fill = group), alpha = 0.4) + 
-      theme_classic() + xlab("Rump Barbule Abs. Difference cm") +
+      theme_classic() + xlab("Rump Barb Abs. Difference cm") +
       ylab("Density") + theme(legend.position = c(0.85, 0.5)) +
       annotate("text", x = -Inf, y = Inf, label = "C", hjust = -0.5, vjust = 1.5)
     p2 <- ggplot(data = pair_df, mapping = aes(x = relation, y = ba_diff)) + theme_classic() +
       geom_jitter(alpha = 0.04, width = 0.1) + 
       geom_boxplot(fill = "coral3", alpha = 0.3, outlier.shape = NA) +
-      xlab("Relationship") + ylab("Rump Barbule Abs. Difference cm") +
+      xlab("Relationship") + ylab("Rump Barb Abs. Difference cm") +
       annotate("text", x = -Inf, y = Inf, label = "A", hjust = -0.5, vjust = 1.5)
     p3 <- ggplot(data = pair_df, mapping = aes(x = same_box, y = ba_diff)) + theme_classic() +
       geom_jitter(alpha = 0.04, width = 0.1) +
       geom_boxplot(fill = "coral3", alpha = 0.3, outlier.shape = NA) +
-      xlab("Nest Raised") + ylab("Rump Barbule Abs. Difference cm") +
+      xlab("Nest Raised") + ylab("Rump Barb Abs. Difference cm") +
       annotate("text", x = -Inf, y = Inf, label = "B", hjust = -0.5, vjust = 1.5)
     
     ggsave(here::here("3_r_scripts/rump_pairwise.png"),
@@ -337,7 +423,7 @@
     
     p3 <- ggplot(data = din, mapping = aes(x = breast_midp, y = breast_den, fill = "coral3")) +
       geom_point(pch = 21) + theme_classic() + guides(fill = FALSE) +
-      xlab("Genetic Midparent Breast Barbules Per cm") + ylab("Nestling Breast Barbules Per cm") +
+      xlab("Genetic Midparent Breast Barbs Per cm") + ylab("Nestling Breast Barbs Per cm") +
       geom_smooth(method = "lm", fill = "slateblue", color = "gray30") +
       annotate("text", x = -Inf, y = Inf, label = "C", hjust = -0.5, vjust = 1.5)
     p1 <- ggplot(data = din, mapping = aes(x = breast_den_f, y = breast_den, fill = "coral3")) +
@@ -352,7 +438,7 @@
       annotate("text", x = -Inf, y = Inf, label = "B", hjust = -0.5, vjust = 1.5)
     p6 <- ggplot(data = din, mapping = aes(x = back_midp, y = breast_den, fill = "coral3")) +
       geom_point(pch = 21) + theme_classic() + guides(fill = FALSE) +
-      xlab("Genetic Midparent Rump Barbules Per cm") + ylab("Nestling Rump Barbules Per cm") +
+      xlab("Genetic Midparent Rump Barbs Per cm") + ylab("Nestling Rump Barbs Per cm") +
       geom_smooth(method = "lm", fill = "slateblue", color = "gray30") +
       annotate("text", x = -Inf, y = Inf, label = "E", hjust = -0.5, vjust = 1.5)
     p4 <- ggplot(data = din, mapping = aes(x = back_den_f, y = breast_den, fill = "coral3")) +
@@ -398,7 +484,7 @@
     
     p3 <- ggplot(data = din, mapping = aes(x = breast_midp, y = breast_den, fill = "coral3")) +
       geom_point(pch = 21) + theme_classic() + guides(fill = FALSE) +
-      xlab("Genetic Midparent Breast Barbules Per cm") + ylab("Nestling Breast Barbules Per cm") +
+      xlab("Genetic Midparent Breast Barbs Per cm") + ylab("Nestling Breast Barbs Per cm") +
       geom_smooth(method = "lm", fill = "slateblue", color = "gray30") +
       annotate("text", x = -Inf, y = Inf, label = "C", hjust = -0.5, vjust = 1.5)
     p1 <- ggplot(data = din, mapping = aes(x = breast_den_f, y = breast_den, fill = "coral3")) +
@@ -413,7 +499,7 @@
       annotate("text", x = -Inf, y = Inf, label = "B", hjust = -0.5, vjust = 1.5)
     p6 <- ggplot(data = din, mapping = aes(x = back_midp, y = breast_den, fill = "coral3")) +
       geom_point(pch = 21) + theme_classic() + guides(fill = FALSE) +
-      xlab("Genetic Midparent Rump Barbules Per cm") + ylab("Nestling Rump Barbules Per cm") +
+      xlab("Genetic Midparent Rump Barbs Per cm") + ylab("Nestling Rump Barbs Per cm") +
       geom_smooth(method = "lm", fill = "slateblue", color = "gray30") +
       annotate("text", x = -Inf, y = Inf, label = "E", hjust = -0.5, vjust = 1.5)
     p4 <- ggplot(data = din, mapping = aes(x = back_den_f, y = breast_den, fill = "coral3")) +
@@ -439,3 +525,117 @@
            device = "png", width = 10.2, height = 7.4)
     
   
+    
+# Nestling barb by morphology ----
+   
+  # Figures (only showing plots based on models)   
+    di_n <- subset(di, di$age == "nestling")
+    
+    p1 <- ggplot(data = di_n, mapping = aes(x = breast_den, y = d12_mass, fill = trt_group)) + 
+      geom_point(alpha = 0.8, pch = 21) + geom_smooth(method = "lm", aes(fill = trt_group), color = "gray30") +
+      theme_classic() + xlab("Breast barbs per cm") + ylab("Mass on day 12 (grams)") +
+      guides(color = FALSE, fill = FALSE) +
+      annotate("text", x = -Inf, y = Inf, label = "A", hjust = -0.5, vjust = 1.5)
+    
+    p2 <- ggplot(data = di_n, mapping = aes(x = breast_den, y = d12_wing, fill = trt_group)) + 
+      geom_point(alpha = 0.8, pch = 21) + geom_smooth(method = "lm", aes(fill = trt_group), color = "gray30") +
+      theme_classic() + xlab("Breast barbs per cm") + ylab("Wing length on day 12 (mm)") +
+      guides(color = FALSE, fill = FALSE) +
+      annotate("text", x = -Inf, y = Inf, label = "B", hjust = -0.5, vjust = 1.5)
+     
+    p3 <- ggplot(data = di_n, mapping = aes(x = breast_den, y = d15_mass, fill = trt_group)) + 
+      geom_point(alpha = 0.8, pch = 21) + geom_smooth(method = "lm", aes(fill = trt_group), color = "gray30") +
+      theme_classic() + xlab("Breast barbs per cm") + ylab("Mass on day 15 (grams)") +
+      guides(color = guide_legend(title = "Treatment"), fill = guide_legend(title = "Treatment")) +
+      annotate("text", x = -Inf, y = Inf, label = "C", hjust = -0.5, vjust = 1.5) + 
+      theme(legend.position = c(x = 0.84, y = 0.17))
+     
+    ggsave(here("3_r_scripts/nestling_morph.png"),
+      ggarrange(p1, p2, p3, nrow = 1),
+      device = "png",
+      width = 11.3, height = 4)
+    
+   # models 
+      di_n$Nest <- di_n$soc_uby
+      di_n$Mother <- di_n$gen_mom
+      m <- lmer(d12_mass ~ back_den + breast_den*trt_group + (1|Nest) + (1|Mother), data = di_n)
+      tab_model(m)
+      m2 <- lmer(d12_head ~ back_den + trt_group + breast_den + (1|Nest) + (1|Mother), data = di_n)
+      tab_model(m2)
+      m3 <- lmer(d12_wing ~ back_den + breast_den*trt_group + (1|Nest) + (1|Mother), data = di_n)
+      tab_model(m3)
+      m4 <- lmer(d15_mass ~ back_den + breast_den*trt_group + (1|Nest) + (1|Mother), data = di_n)
+      tab_model(m4)
+      
+      tab_model(m, m2, m3, m4, 
+                dv.labels = c("Day 12 Mass", "Day 12 Head + Bill", "Day 12 Flat Wing", "Day 15 Mass"),
+                pred.labels = c("Intercept", "Back Barb Density", "Breast Barb Density", "Handicap", "Predator", 
+                                "Breast Barb * Handicap", "Breast Barb * Predator")
+                )
+    
+    
+# Social nest by barb density ----
+    
+    ggplot(data = di_n, mapping = aes(x = reorder(soc_uby, breast_den, mean, na.rm = TRUE), y = breast_den)) + 
+      geom_boxplot(fill = "coral3") + theme_bw() + xlab("Nest") + ylab("Breast barbs per cm") +
+      theme(axis.text.x = element_blank()) + geom_point(col = "gray30") +
+        geom_boxplot(mapping = aes(x = reorder(soc_uby, breast_den, mean, na.rm = TRUE), y = back_den), fill = "slateblue")
+    
+    ggplot(data = di_n, mapping = aes(x = reorder(soc_uby, back_den, mean, na.rm = TRUE), y = back_den)) + 
+      geom_boxplot(fill = "coral3") + theme_bw() + xlab("Nest") + ylab("Back barbs per cm") +
+      theme(axis.text.x = element_blank()) + geom_point(col = "gray30")
+    
+    di_n %>%
+      group_by(soc_uby) %>%
+      summarize(br_mu = mean(breast_den, na.rm = TRUE), ba_mu = mean(back_den, na.rm = TRUE), 
+                br_sd = sd(breast_den, na.rm = TRUE), ba_sd = sd(back_den, na.rm = TRUE)) %>%
+      ggplot(mapping = aes(x = br_mu, y = ba_mu)) + 
+        geom_pointrange(aes(xmin = br_mu - br_sd, xmax = br_mu + br_sd), col = "gray20") +
+        geom_pointrange(aes(ymin = ba_mu - ba_sd, ymax = ba_mu + ba_sd), col = "gray20") +
+        geom_point(pch = 21, fill = "slateblue") +
+        geom_smooth(method = "lm", fill = "coral3", color = "gray30") +
+        theme_classic() 
+        
+    
+    di_n2 <- pivot_longer(di_n, cols = c("breast_den", "back_den"), names_to = "region", values_to = "density")
+    
+    m1 <- lmer(breast_den ~ 1 + (1|soc_uby) , data = di_n, REML = FALSE)
+    m2 <- lmer(breast_den ~ 1 + (1|gen_mom) , data = di_n, REML = FALSE)
+    m3 <- lmer(breast_den ~ 1 + (1|soc_uby) + (1|gen_mom), data = di_n, REML = FALSE)
+    mn1 <- lm(breast_den ~ 1, data = di_n, REML = FALSE)
+    
+    model.sel(m1, m2, m3, mn1)
+    
+    m4 <- lmer(back_den ~ 1 + (1|soc_uby), data = di_n, REML = FALSE)
+    m5 <- lmer(back_den ~ 1 + (1|gen_mom), data = di_n, REML = FALSE)
+    m6 <- lmer(back_den ~ 1 + (1|soc_uby) + (1|gen_mom), data = di_n, REML = FALSE)
+    mn2 <- lm(back_den ~ 1, data = di_n, REML = FALSE)
+    
+    model.sel(m4, m5, m6, mn2)
+    
+# ICC for social nest and mom ----
+    
+    rpt(breast_den ~ 1 + (1|gen_mom) + (1|soc_uby), grname = c("soc_uby", "gen_mom"), 
+        data = di_n, datatype = "Gaussian", nboot = 1000, npermut = 0)
+    rpt(back_den ~ 1 + (1|gen_mom) + (1|soc_uby), grname = c("soc_uby", "gen_mom"), 
+        data = di_n, datatype = "Gaussian", nboot = 1000, npermut = 0)
+    
+    rpt(breast_den ~ 1 + (1|gen_mom), grname = "gen_mom", 
+        data = di_n, datatype = "Gaussian", nboot = 1000, npermut = 0)
+    rpt(back_den ~ 1 + (1|gen_mom), grname = "gen_mom", 
+        data = di_n, datatype = "Gaussian", nboot = 1000, npermut = 0)
+    
+    rpt(breast_den ~ 1 + (1|soc_uby), grname = "soc_uby", 
+        data = di_n, datatype = "Gaussian", nboot = 1000, npermut = 0)
+    rpt(back_den ~ 1 + (1|soc_uby), grname = "soc_uby", 
+        data = di_n, datatype = "Gaussian", nboot = 1000, npermut = 0)
+
+    
+# Barbs by fledging and treatment ----
+    fate <- subset(di_n, di_n$fate != "Unknown")
+    fated <- data.frame(fate = c("Died", "Fledged"), nfate = c(0, 1))    
+    fate <- plyr::join(fate, fated, "fate")    
+    m <- glmer(nfate ~ scale(breast_den) + scale(back_den) + trt_group + (1|soc_uby), 
+               data = fate, family = "binomial")    
+    m1 <- glmer(nfate ~ trt_group + (1|soc_uby), data = fate, family = "binomial")
+    
