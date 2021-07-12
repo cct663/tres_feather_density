@@ -378,6 +378,28 @@
            pp, device = "png", width = 4, height = 4)
     
     
+    # Repeat above using total provisioning (male + female) for subset with male data
+      dpm <- subset(dp, is.na(dp$m_feed) == FALSE)
+      dpm$t_feed <- dpm$f_feed + dpm$m_feed
+      
+      mx <- lmer(t_feed ~ d6_brood + offset + I(offset ^ 2) + (1|uby), data = dpm)
+      rr <- data.frame(soc_uby = rownames(ranef(mx)$uby), blup = ranef(mx)$uby[, 1],
+                       s_prov = mean(na.omit(dpm$d6_brood))*fixef(mx)[2] + ranef(mx)$uby[, 1] +
+                         fixef(mx)[1] + fixef(mx)[3]*12 + fixef(mx)[4]*144)
+      
+      di_n <- subset(di, di$age == "nestling")
+      di_np <- plyr::join(di_n, rr, "soc_uby")
+      
+      m <- lmer(breast_den ~ scale(s_prov) + (1|soc_uby) + (1|gen_mom), data = di_np)
+      m2 <- lmer(back_den ~ scale(s_prov) + (1|soc_uby) + (1|gen_mom), data = di_np)
+      
+      tab_model(m, m2)
+      
+      pp2 <- ggplot(data = di_np, mapping = aes(x = scale(s_prov), y = breast_den)) + 
+        theme_classic() + geom_point(color = n_color) + geom_smooth(method = "lm", fill = n_color) +
+        xlab("Combined provisioning rate (sd)") + ylab("Breast barbs per cm") +
+        theme(axis.title = element_text(size = 16))
+    
 ## NOT INCLUDED IN PAPER BELOW HERE ----
 
 # Plot multiple feather comparison ----
