@@ -266,7 +266,8 @@
     
     tab_model(m_red,
               dv.labels = "Fledge Age (Days)",
-              pred.labels = c("Intercept (Control)", "Back Barb Density", "Breast Barb Density", "Handicap", "Predator"))
+              pred.labels = c("Intercept (Control)", "Back Barb Density", "Breast Barb Density", "Handicap", "Predator"),
+              show.icc = FALSE, show.re.var = FALSE, show.ngroups = FALSE)
 
 
 # Nestling barb by morphology ----
@@ -319,7 +320,8 @@
       tab_model(m, m2, m3, m4, 
                 dv.labels = c("Day 12 Mass", "Day 12 Head + Bill", "Day 12 Flat Wing", "Day 15 Mass"),
                 pred.labels = c("Intercept", "Back Barb Density", "Breast Barb Density", "Handicap", "Predator", 
-                                "Breast Barb * Handicap", "Breast Barb * Predator")
+                                "Breast Barb * Handicap", "Breast Barb * Predator"),
+                show.icc = FALSE, show.re.var = FALSE, show.ngroups = FALSE, digits.p = 2, digits = 1
                 )
     
     
