@@ -369,6 +369,12 @@
     m <- lmer(breast_den ~ scale(s_prov) + (1|soc_uby) + (1|gen_mom), data = di_np)
     m2 <- lmer(back_den ~ scale(s_prov) + (1|soc_uby) + (1|gen_mom), data = di_np)
     
+    di_npx <- subset(di_np, is.na(di_np$breast_den) == FALSE & is.na(di_np$back_den) == FALSE)
+    mx <- lmer(breast_den ~ scale(d15_mass) + trt_group + 
+                 scale(s_prov) +
+                 sex + trt_group*scale(d15_mass) +
+                 (1|soc_uby) + (1|gen_mom), data = di_np)
+    
     tab_model(m, m2)
     
     pp <- ggplot(data = di_np, mapping = aes(x = scale(s_prov), y = breast_den)) + 
