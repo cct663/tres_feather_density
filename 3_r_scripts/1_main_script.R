@@ -256,8 +256,11 @@
     di_n <- subset(di, di$age == "nestling")
     di_n$Nest <- di_n$soc_uby
     di_n$Mother <- di_n$gen_mom
+    di_n <- subset(di_n, di_n$sex == "female" | di_n$sex == "male")
     m_full <- lmer(fled_age ~ back_den + breast_den + trt_group + back_den*trt_group + breast_den*trt_group + (1|Nest) + (1|Mother), data = di_n)
-    m_red <- lmer(fled_age ~ back_den + breast_den + trt_group + (1|Nest) + (1|Mother), data = di_n)
+    m_red <- lmer(fled_age ~ back_den + breast_den + sex + trt_group + (1|Nest) + (1|Mother), data = di_n)
+    
+
     
     tab_model(m_full, m_red,
               dv.labels = c("Fledge Age (Days)", "Fledge Age (Days)"),
@@ -369,12 +372,6 @@
     m <- lmer(breast_den ~ scale(s_prov) + (1|soc_uby) + (1|gen_mom), data = di_np)
     m2 <- lmer(back_den ~ scale(s_prov) + (1|soc_uby) + (1|gen_mom), data = di_np)
     
-    di_npx <- subset(di_np, is.na(di_np$breast_den) == FALSE & is.na(di_np$back_den) == FALSE)
-    mx <- lmer(breast_den ~ scale(d15_mass) + trt_group + 
-                 scale(s_prov) +
-                 sex + trt_group*scale(d15_mass) +
-                 (1|soc_uby) + (1|gen_mom), data = di_np)
-    
     tab_model(m, m2)
     
     pp <- ggplot(data = di_np, mapping = aes(x = scale(s_prov), y = breast_den)) + 
@@ -407,7 +404,134 @@
         theme_classic() + geom_point(color = n_color) + geom_smooth(method = "lm", fill = n_color) +
         xlab("Combined provisioning rate (sd)") + ylab("Breast barbs per cm") +
         theme(axis.title = element_text(size = 16))
+      
+    # These are the first models actually in the revised paper
+      mf2 <- lmer(breast_den ~ scale(fled_age) + sex + trt_group + scale(s_prov) + scale(fled_age)*trt_group + (1|soc_uby) + (1|gen_mom), data = di_np)
+      mr2 <- lmer(breast_den ~ scale(fled_age) + sex + trt_group + (1|soc_uby) + (1|gen_mom), data = di_np)
+      
+      mf2x <- lmer(back_den ~ scale(fled_age) + sex + trt_group + scale(s_prov) + scale(fled_age)*trt_group + (1|soc_uby) + (1|gen_mom), data = di_np)
+      mr2x <- lmer(breast_den ~ scale(fled_age) + sex + trt_group + (1|soc_uby) + (1|gen_mom), data = di_np)
+      
+      tab_model(mf2, mf2x)
     
+# Revised models requested ----
+      dp <- plyr::join(dp, dnest, "uby", "left", "first")
+      dp$doy_y <- paste(dp$doy, dp$year, sep = "_")
+      di_a <- di[, c("band", "back_den", "breast_den")]
+      colnames(di_a)[1] <- "female"
+      dp <- plyr::join(dp, di_a, "female")
+      mx <- lmer(f_feed ~ d6_brood + offset + I(offset ^ 2) + (1|uby), data = dp)
+      rr <- data.frame(soc_uby = rownames(ranef(mx)$uby), blup = ranef(mx)$uby[, 1],
+                       s_prov = mean(na.omit(dp$d6_brood))*fixef(mx)[2] + ranef(mx)$uby[, 1] +
+                         fixef(mx)[1] + fixef(mx)[3]*12 + fixef(mx)[4]*144)
+      
+      di_n <- subset(di, di$age == "nestling")
+      di_np <- plyr::join(di_n, rr, "soc_uby")
+      di_np <- subset(di_np, di_np$sex == "female" | di_np$sex == "male")
+
+      di_npx <- subset(di_npx, is.na(di_npx$d12_wing) == FALSE & is.na(di_npx$d12_mass) == FALSE & is.na(di_npx$d12_head) == FALSE)
+      sz_pca <- prcomp(na.omit(di_npx[, c("d12_mass", "d12_head", "d12_wing")]))
+      di_npx$sz_pc1 <- sz_pca[[5]][, 1]  # get first principal component, explains 90.8% of variation in size
+      di_npx$sz_pc2 <- sz_pca[[5]][, 2]
+      
+      di_npx_br <- subset(di_npx, is.na(di_npx$breast_den) == FALSE)
+      di_npx_ba <- subset(di_npx, is.na(di_npx$back_den) == FALSE)
+      
+      
+      
+      mx_br <- lmer(breast_den ~ 
+                      #scale(d12_wing) + 
+                      #scale(d12_head) + 
+                      #scale(d12_mass) + 
+                      #scale(s_prov) + 
+                      scale(sz_pc1) +
+                      trt_group + 
+                      sex +
+                      #trt_group*scale(d12_wing) +
+                      #trt_group*scale(d12_head) +
+                      #trt_group*scale(d12_mass) +
+                      trt_group*scale(sz_pc1) +
+                      (1|soc_uby) + (1|gen_mom), data = di_npx_br)  
+      mx_br_p <- lmer(breast_den ~ 
+                        #scale(d12_wing) + 
+                        #scale(d12_head) + 
+                        #scale(d12_mass) + 
+                        scale(sz_pc1) +
+                        scale(s_prov) + 
+                        trt_group + 
+                        sex +
+                        #trt_group*scale(d12_wing) +
+                        #trt_group*scale(d12_head) +
+                        #trt_group*scale(d12_mass) +
+                        trt_group*scale(sz_pc1) +
+                        (1|soc_uby) + (1|gen_mom), data = di_npx_br)  
+      
+      mx_ba <- lmer(back_den ~ 
+                      #scale(d12_wing) + 
+                      #scale(d12_head) + 
+                      #scale(d12_mass) + 
+                      #scale(s_prov) + 
+                      scale(sz_pc1) +
+                      trt_group + 
+                      sex +
+                      #trt_group*scale(d12_wing) +
+                      #trt_group*scale(d12_head) +
+                      #trt_group*scale(d12_mass) +
+                      trt_group*scale(sz_pc1) +
+                      (1|soc_uby) + (1|gen_mom), data = di_npx_ba)  
+      mx_ba_p <- lmer(back_den ~ 
+                        #scale(d12_wing) + 
+                        #scale(d12_head) + 
+                        #scale(d12_mass) + 
+                        scale(s_prov) + 
+                        scale(sz_pc1) +
+                        trt_group + 
+                        sex +
+                        #trt_group*scale(d12_wing) +
+                        #trt_group*scale(d12_head) +
+                        #trt_group*scale(d12_mass) +
+                        trt_group*scale(sz_pc1) +
+                        (1|soc_uby) + (1|gen_mom), data = di_npx_ba)  
+      
+      tab_model(mx_br, mx_br_p, mx_ba, mx_ba_p)
+      tab_model(mx_br_p, mx_ba_p)
+      
+      hd <- lmer(d12_head ~ trt_group + (1|soc_uby) + (1|gen_mom), data = di_npx)
+      wng <- lmer(d12_wing ~ trt_group + (1|soc_uby) + (1|gen_mom), data = di_npx)
+      mss <- lmer(d12_mass ~ trt_group + (1|soc_uby) + (1|gen_mom), data = di_npx)
+      szp <- lmer(sz_pc1 ~ trt_group + (1|soc_uby) + (1|gen_mom), data = di_npx)
+      
+      di_npx2 <- data.frame(
+        d12_wing = rep(di_npx$d12_wing, 2),
+        d12_head = rep(di_npx$d12_head, 2),
+        d12_mass = rep(di_npx$d12_mass, 2),
+        trt_group = rep(di_npx$trt_group, 2),
+        sex = rep(di_npx$sex, 2),
+        band = rep(di_npx$band, 2),
+        s_prov = rep(di_npx$s_prov, 2),
+        soc_uby = rep(di_npx$soc_uby, 2),
+        gen_mom = rep(di_npx$gen_mom, 2),
+        feather = c(di_npx$breast_den, di_npx$back_den),
+        sz_pc1 = rep(di_npx$sz_pc1, 2),
+        type = c(rep("breast", nrow(di_npx)), rep("back", nrow(di_npx)))
+      )
+
+      mcomb <- lmer(feather ~
+                      #scale(d12_wing) +
+                      #scale(d12_head) +
+                      #scale(d12_mass) +
+                      scale(sz_pc1) +
+                      trt_group +
+                      sex +
+                      type +
+                      scale(s_prov) +
+                      #trt_group*scale(d12_wing) +
+                      #trt_group*scale(d12_head) +
+                      #trt_group*scale(d12_mass)*type +
+                      #trt_group*sz_pc1 +
+                      (1|soc_uby) + (1|gen_mom), data = di_npx2)
+
+      
 ## NOT INCLUDED IN PAPER BELOW HERE ----
 
 # Plot multiple feather comparison ----
