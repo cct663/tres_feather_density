@@ -129,7 +129,7 @@
                                     c(1, 1, 1, 1, 2, 2, 3, 3),
                                     c(1, 1, 1, 1, 4, 4, 5, 5),
                                     c(1, 1, 1, 1, 4, 4, 5, 5))),
-               device = "png", width = 8, height = 4)
+               device = "png", width = 8, height = 4, dpi = 600)
     
 # Calculate observer and multi-feather repeatability ----
   # Repeatability for multiple feathers from the same bird
@@ -201,7 +201,7 @@
     ggMarginal(p1, type = "boxplot", groupFill = TRUE, bw = .7)
     
     ggsave(here::here("3_r_scripts/figure_2.png"), 
-           ggMarginal(p1, type = "boxplot", groupFill = TRUE, bw = .7), device = "png", width = 5, height = 5)
+           ggMarginal(p1, type = "boxplot", groupFill = TRUE, bw = .7), device = "png", width = 5, height = 5, dpi = 600)
 
 # Back vs. breast stats ----
     
@@ -250,7 +250,7 @@
     
     ggsave(here::here("3_r_scripts/figure_3.png"),   
       ggarrange(p1, p2),
-      device = "png", width = 11, height = 5.6)
+      device = "png", width = 11, height = 5.6, dpi = 600)
     
   # Model
     di_n <- subset(di, di$age == "nestling")
@@ -306,7 +306,7 @@
     ggsave(here("3_r_scripts/figure_4.png"),
       ggarrange(p1, p2, p3, nrow = 1),
       device = "png",
-      width = 11.3, height = 4)
+      width = 11.3, height = 4, dpi = 600)
     
    # models 
       di_n$Nest <- di_n$soc_uby
@@ -380,7 +380,7 @@
       theme(axis.title = element_text(size = 16))
     
     ggsave(here::here("3_r_scripts/figure_5.png"),
-           pp, device = "png", width = 4, height = 4)
+           pp, device = "png", width = 4, height = 4, dpi = 600)
     
     
     # Repeat above using total provisioning (male + female) for subset with male data
@@ -429,7 +429,7 @@
       di_np <- plyr::join(di_n, rr, "soc_uby")
       di_np <- subset(di_np, di_np$sex == "female" | di_np$sex == "male")
 
-      di_npx <- subset(di_npx, is.na(di_npx$d12_wing) == FALSE & is.na(di_npx$d12_mass) == FALSE & is.na(di_npx$d12_head) == FALSE)
+      di_npx <- subset(di_np, is.na(di_np$d12_wing) == FALSE & is.na(di_np$d12_mass) == FALSE & is.na(di_np$d12_head) == FALSE)
       sz_pca <- prcomp(na.omit(di_npx[, c("d12_mass", "d12_head", "d12_wing")]))
       di_npx$sz_pc1 <- sz_pca[[5]][, 1]  # get first principal component, explains 90.8% of variation in size
       di_npx$sz_pc2 <- sz_pca[[5]][, 2]
